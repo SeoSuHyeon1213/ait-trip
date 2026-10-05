@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { graniteEvent, SafeAreaInsets } from '@apps-in-toss/web-framework';
-import { destinations, moods, regions } from './data/destinations';
-import type { Destination, Mood, Region } from './data/destinations';
-import { getRecommendations } from './services/recommendations';
+import { moods, regions } from './config/travelOptions';
+import type { Destination, Mood, Region } from './domain/models/Destination';
+import { destinationRepository } from './composition/destinationRepository';
 import { Scenery } from './components/Scenery';
 import './App.css';
 
@@ -19,7 +19,7 @@ function readRoute(): Route {
 function readFavorites(): string[] {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(FAVORITES_KEY) ?? '[]');
-    return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string' && destinations.some((item) => item.id === id)) : [];
+    return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
   } catch { return []; }
 }
 function readInsets() {
@@ -33,6 +33,8 @@ function App() {
   const [region, setRegion] = useState<Region>('전체');
   const [favorites, setFavorites] = useState(readFavorites);
   const [storageNotice, setStorageNotice] = useState('');
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [recommendation, setRecommendation] = useState<{ key: string; items: Destination[]; status: 'ready' | 'error' } | null>(null);
   const [retry, setRetry] = useState(0);
   const [insets, setInsets] = useState(readInsets);
@@ -79,7 +81,15 @@ function App() {
 
   useEffect(() => {
     let active = true;
-    getRecommendations({ mood, region }).then((items) => {
+    destinationRepository.getAll().then((items) => {
+      if (active) { setDestinations(items); setCatalogStatus('ready'); }
+    }).catch(() => { if (active) setCatalogStatus('error'); });
+    return () => { active = false; };
+  }, [retry]);
+
+  useEffect(() => {
+    let active = true;
+    destinationRepository.getRecommendations({ mood, region }).then((items) => {
       if (active) setRecommendation({ key: queryKey, items, status: 'ready' });
     }).catch(() => { if (active) setRecommendation({ key: queryKey, items: [], status: 'error' }); });
     return () => { active = false; };
@@ -151,12 +161,12 @@ function App() {
       <p className="eyebrow brand-label">나의 여행 목록</p>
       <h1 ref={headingRef} tabIndex={-1}>다음에 가보고 싶은 곳</h1>
       <p className="lead">찜한 여행지 {favorites.length}곳을 모아뒀어요.</p>
-      {favorites.length ? <div className="destination-list">{destinations.filter((item) => favorites.includes(item.id)).map(card)}</div> : <div className="empty-state"><h2>아직 찜한 여행지가 없어요</h2><p>추천 목록에서 마음에 드는 곳을 저장해 보세요.</p></div>}
+      {catalogStatus === 'loading' ? <div role="status" className="empty-state">찜한 여행지를 불러오고 있어요.</div> : catalogStatus === 'error' ? <div role="alert" className="empty-state"><p>여행지를 불러오지 못했어요.</p><button type="button" className="secondary-button" onClick={() => setRetry((value) => value + 1)}>다시 불러오기</button></div> : favorites.length ? <div className="destination-list">{destinations.filter((item) => favorites.includes(item.id)).map(card)}</div> : <div className="empty-state"><h2>아직 찜한 여행지가 없어요</h2><p>추천 목록에서 마음에 드는 곳을 저장해 보세요.</p></div>}
       <p className="sample-note">찜 목록은 이 기기의 브라우저에 저장돼요.</p>
       <div className="bottom-action"><button className="primary-button" type="button" onClick={() => navigate('/')}>여행지 찾아보기</button></div>
     </>}
 
-    {route.page === 'detail' && (place ? <>
+    {route.page === 'detail' && (catalogStatus === 'loading' ? <div role="status" className="empty-state">여행지를 불러오고 있어요.</div> : catalogStatus === 'error' ? <div role="alert" className="empty-state"><p>여행지를 불러오지 못했어요.</p><button type="button" className="secondary-button" onClick={() => setRetry((value) => value + 1)}>다시 불러오기</button></div> : place ? <>
       <Scenery scene={place.scene} />
       <p className="eyebrow">{place.location} · {place.category}</p>
       <h1 ref={headingRef} tabIndex={-1}>{place.name}</h1>

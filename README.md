@@ -34,8 +34,10 @@ npm run lint     # 코드 검사
 
 ```text
 src/App.tsx                     화면 구성, 이동 및 찜 상태
-src/data/destinations.ts        여행지 모델과 샘플 데이터
-src/services/recommendations.ts 추천 데이터 공급 함수
+src/domain/                    여행지 모델과 Repository 인터페이스
+src/data/                      DataSource · DTO · Mapper · Repository 구현
+src/composition/               구현체 조립
+src/config/travelOptions.ts    기분·지역 선택지
 src/components/Scenery.tsx      풍경 SVG 일러스트
 apps-in-toss.config.ts          앱인토스 설정
 ```
@@ -43,3 +45,7 @@ apps-in-toss.config.ts          앱인토스 설정
 ## 다음 개발 단계
 
 한국관광공사 **국문 관광정보 서비스_GW**를 연동해 실제 여행지 정보와 사진을 제공할 예정입니다. API 인증키는 서버에서 관리하며 프론트엔드 코드나 `VITE_*` 환경변수에 넣지 않습니다.
+
+## 데이터 구조
+
+`DataSource → DTO → Mapper → Repository`로 데이터를 전달합니다. 현재는 Mock DataSource를 사용하며 화면에서는 Repository가 반환한 도메인 모델을 사용합니다. 자세한 설명은 [데이터 구조](docs/data-architecture.md)를 참고하세요.

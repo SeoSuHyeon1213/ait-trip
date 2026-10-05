@@ -22,8 +22,8 @@ URL 해시 경로: `#/`, `#/results`, `#/saved`, `#/place/seoul-forest`.
 
 ## TourAPI 연동 지점
 
-- `src/data/destinations.ts`: 화면에서 사용하는 여행지 모델과 샘플 데이터.
-- `src/services/recommendations.ts`: 향후 서버 추천 API를 호출할 곳.
+- `src/domain/models/Destination.ts` 및 `src/data/fixtures/mockDestinationDtos.ts`: 화면에서 사용하는 여행지 모델과 샘플 데이터.
+- `src/composition/destinationRepository.ts`: 향후 서버 추천 API를 호출할 곳.
 - 다음 단계는 서버에서 TourAPI 데이터를 조회하고 이 모델로 변환하는 것입니다.
 - 관광공사 인증키는 서버 환경변수에 보관합니다. `VITE_*`에 넣으면 브라우저 번들에 공개됩니다.
 - 상세 화면의 운영시간·요금 등은 연동 전까지 표시하지 않습니다.

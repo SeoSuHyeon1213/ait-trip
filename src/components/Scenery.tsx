@@ -1,4 +1,4 @@
-import type { Destination } from '../data/destinations';
+import type { Destination } from '../domain/models/Destination';
 
 // 직접 작성한 장식용 SVG입니다. 여행지의 실제 사진이 아닙니다.
 export function Scenery({ scene }: { scene: Destination['scene'] }) {
