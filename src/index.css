@@ -1,0 +1,33 @@
+@import './styles/base.css';
+
+:root {
+  color-scheme: light;
+  --brand-primary: #246352;
+  --color-bg: #fcfcf9;
+  --color-bg-canvas: #f2f4ee;
+  --surface: #ffffff;
+  --brand-soft: #edf4ee;
+  --line: #dce4dd;
+  --radius: 18px;
+  --radius-small: 12px;
+  --tap: 48px;
+  --app-width: 520px;
+  --scene-height: 160px;
+  --scene-sky: #e4eee3;
+  --scene-sun: #f5dda0;
+  --scene-back: #b3cab4;
+  --scene-front: #86aa8c;
+  --scene-land: #547d61;
+}
+
+body { min-width: 280px; font-size: var(--font-size-body-small); line-height: 1.6; }
+button, select { font: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button, select { min-height: var(--tap); }
+button:focus-visible, select:focus-visible { outline: 3px solid var(--brand-primary); outline-offset: 3px; }
+h1:focus { outline: none; }
+h1, h2, p { margin: 0; }
+h1 { font-size: var(--font-size-display); line-height: 1.4; font-weight: var(--font-weight-display); color: var(--color-text-strong); }
+h2 { font-size: var(--font-size-title); line-height: 1.5; font-weight: var(--font-weight-title); color: var(--color-text-strong); }
+button { color: inherit; }
+#root { min-height: 100dvh; }
