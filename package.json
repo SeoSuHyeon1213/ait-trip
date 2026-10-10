@@ -1,5 +1,5 @@
 {
-  "name": "my-miniapp",
+  "name": "aitmidtotrip",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build && ait build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "deploy": "ait deploy"
+    "deploy": "ait deploy",
+    "start": "node --env-file=.env server/index.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "start:server": "node server/index.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

@@ -10,5 +10,7 @@ export interface DestinationDto {
   mood_codes: string[];
   overview: string;
   recommendation_reasons: Record<string, string>;
+  image_url?: string; image_copyright?: string; latitude?: number; longitude?: number; content_type_id?: string;
+  visit_info?: { hours?: string; fee?: string; closedDays?: string; phone?: string };
   illustration_type: string;
 }

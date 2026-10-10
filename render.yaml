@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: aitmidtotrip-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run start:server
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: HOST
+        value: 0.0.0.0
+      - key: TOUR_API_ENDPOINT
+        sync: false
+      - key: TOUR_API_SERVICE_KEY
+        sync: false
+      - key: TOUR_API_MOBILE_APP
+        value: aitmidtotrip
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://aitmidtotrip.apps.tossmini.com,https://aitmidtotrip.private-apps.tossmini.com
