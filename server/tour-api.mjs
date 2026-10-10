@@ -35,7 +35,7 @@ export function createTourClient(config, fetcher = fetch) {
       if (stored && stored.until > Date.now()) return stored.value;
       let res;
       try { res = await fetcher(url, { signal: AbortSignal.timeout(10000) }); } catch { throw new ApiError('관광정보 서버에 연결하지 못했어요.'); }
-      if (!res.ok) throw new ApiError('관광정보 서버 요청에 실패했어요.');
+      if (!res.ok) throw new ApiError('관광정보 서버 요청에 실패했어요. (HTTP ' + res.status + ')');
       const text = await res.text();
       // 인증 오류는 JSON 요청에도 XML로 반환될 수 있습니다. 원문/키는 클라이언트에 전달하지 않습니다.
       if (text.trimStart().startsWith('<')) throw new ApiError('관광정보 인증 설정 또는 사용 권한을 확인해 주세요.');
