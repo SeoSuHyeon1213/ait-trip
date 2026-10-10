@@ -6,16 +6,13 @@ import { moods, regions } from './config/travelOptions';
 import type { Destination, Mood, Region } from './domain/models/Destination';
 import { destinationRepository } from './composition/destinationRepository';
 import { DestinationImage } from './components/DestinationImage';
+import { readAppRoute } from './navigation/readAppRoute.mjs';
+import type { AppRoute as Route } from './navigation/readAppRoute.mjs';
 import './App.css';
 
-type Route = { page: 'home' | 'results' | 'saved' } | { page: 'detail'; id: string };
 const FAVORITES_KEY = 'mood-travel:favorites:v1';
 function readRoute(): Route {
-  const hash = window.location.hash.slice(1);
-  if (hash.startsWith('/place/')) return { page: 'detail', id: hash.slice(7) };
-  if (hash === '/results') return { page: 'results' };
-  if (hash === '/saved') return { page: 'saved' };
-  return { page: 'home' };
+  return readAppRoute(window.location);
 }
 function readFavorites(): string[] {
   try {
