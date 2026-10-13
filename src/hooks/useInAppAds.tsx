@@ -1,122 +1,81 @@
-import {
-  loadFullScreenAd,
-  showFullScreenAd,
-} from "@apps-in-toss/web-framework";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { loadFullScreenAd, showFullScreenAd } from '@apps-in-toss/web-framework';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface Reward {
-  unitType: string;
-  unitAmount: number;
-}
+type AdStatus = 'unsupported' | 'loading' | 'ready' | 'showing' | 'error';
+interface Reward { unitType: string; unitAmount: number }
 
-interface UseInAppAdsReturn {
-  isAdLoaded: boolean;
-  isSupported: boolean;
-  showAd: () => void;
-  lastReward: Reward | null;
-}
-
-// 참고문서: https://developers-apps-in-toss.toss.im/ads/intro.html
-export function useInAppAds(adGroupId: string): UseInAppAdsReturn {
-  const [isAdLoaded, setIsAdLoaded] = useState(false);
+export function useInAppAds(adGroupId: string) {
+  const [isSupported] = useState(() => {
+    try { return loadFullScreenAd.isSupported() && showFullScreenAd.isSupported(); }
+    catch { return false; }
+  });
+  const [status, setStatus] = useState<AdStatus>(isSupported ? 'loading' : 'unsupported');
+  const [message, setMessage] = useState('');
   const [lastReward, setLastReward] = useState<Reward | null>(null);
-  const [isSupported, setIsSupported] = useState(false);
-  const unregisterRef = useRef<(() => void) | null>(null);
+  const loadCleanup = useRef<(() => void) | null>(null);
+  const showCleanup = useRef<(() => void) | null>(null);
+  const active = useRef(false);
+  const showing = useRef(false);
 
-  /**
-   * 광고를 로드해요.
-   */
   const load = useCallback(() => {
-    setIsAdLoaded(false);
-
+    if (!isSupported) return;
+    loadCleanup.current?.();
+    setStatus('loading');
+    setMessage('');
     try {
-      unregisterRef.current = loadFullScreenAd({
+      loadCleanup.current = loadFullScreenAd({
         options: { adGroupId },
-        onEvent: (event) => {
-          if (event.type === "loaded") {
-            setIsAdLoaded(true);
-          }
-        },
-        onError: (error) => {
-          console.error("광고 로드 실패:", error);
+        onEvent: event => { if (active.current && event.type === 'loaded') setStatus('ready'); },
+        onError: () => {
+          if (!active.current) return;
+          setStatus('error');
+          setMessage('광고를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
         },
       });
-    } catch (error) {
-      alert(
-        "광고 로드 실패: \n\n- 인앱 광고 기능은 브라우저가 아닌 샌드박스 앱/토스 앱에서 실행해 주세요\n\n" +
-          error,
-      );
+    } catch {
+      setStatus('error');
+      setMessage('광고를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
     }
-  }, [adGroupId]);
+  }, [adGroupId, isSupported]);
 
   useEffect(() => {
-    try {
-      setIsSupported(loadFullScreenAd.isSupported());
-
-      if (loadFullScreenAd.isSupported()) {
-        load();
-      }
-    } catch (error) {
-      console.error("광고 지원 여부 확인 실패:", error);
-      setIsSupported(false);
-    }
-
+    active.current = true;
+    // 초기 상태는 loading이며, 다음 작업에서 광고를 준비합니다.
+    const timer = setTimeout(load, 0);
     return () => {
-      try {
-        unregisterRef.current?.();
-      } catch (error) {
-        console.error("광고 정리(cleanup) 중 에러:", error);
-      }
+      active.current = false;
+      clearTimeout(timer);
+      loadCleanup.current?.();
+      showCleanup.current?.();
     };
   }, [load]);
 
-  /**
-   * 광고를 실제로 화면에 표시해요.
-   * - 지원되지 않는 환경이거나, 아직 로드되지 않은 경우에는 아무 동작도 하지 않아요.
-   */
   const showAd = useCallback(() => {
-    if (!isSupported) {
-      console.info("현재 환경에서는 인앱 광고가 지원되지 않아요.");
-      return;
-    }
-
-    if (!isAdLoaded) {
-      console.info("아직 광고가 로드되지 않았어요.");
-      return;
-    }
-
+    if (!isSupported || status !== 'ready' || showing.current) return;
+    showing.current = true;
+    setStatus('showing');
+    setLastReward(null);
+    setMessage('');
+    const fail = () => {
+      showing.current = false;
+      if (!active.current) return;
+      setStatus('error');
+      setMessage('광고를 표시하지 못했어요. 다시 불러와 주세요.');
+    };
     try {
-      showFullScreenAd({
+      showCleanup.current?.();
+      showCleanup.current = showFullScreenAd({
         options: { adGroupId },
-        onEvent: (event) => {
-          switch (event.type) {
-            case "userEarnedReward":
-              setLastReward(event.data);
-              break;
-            case "dismissed":
-              setIsAdLoaded(false);
-              load();
-              break;
-            case "failedToShow":
-              console.error("광고 표시 실패");
-              setIsAdLoaded(false);
-              // 실패한 경우에도 다시 로드를 시도해 다음 기회를 준비해요.
-              load();
-              break;
-          }
+        onEvent: event => {
+          if (!active.current) return;
+          if (event.type === 'userEarnedReward') setLastReward(event.data);
+          if (event.type === 'dismissed') { showing.current = false; load(); }
+          if (event.type === 'failedToShow') fail();
         },
-        onError: (error) => {
-          console.error("광고 표시 실패:", error);
-          setIsAdLoaded(false);
-          load();
-        },
+        onError: fail,
       });
-    } catch (error) {
-      console.error("광고 표시 실패:", error);
-      setIsAdLoaded(false);
-      load();
-    }
-  }, [adGroupId, isAdLoaded, isSupported, load]);
+    } catch { fail(); }
+  }, [adGroupId, isSupported, status, load]);
 
-  return { isAdLoaded, isSupported, showAd, lastReward };
+  return { isSupported, isAdLoaded: status === 'ready', status, message, showAd, reload: load, lastReward };
 }

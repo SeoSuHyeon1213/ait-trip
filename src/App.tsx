@@ -9,6 +9,7 @@ import { DestinationImage } from './components/DestinationImage';
 import { readAppRoute } from './navigation/readAppRoute.mjs';
 import type { AppRoute as Route } from './navigation/readAppRoute.mjs';
 import './App.css';
+import { InAppAdsPage } from './pages/InAppAdsPage';
 
 const FAVORITES_KEY = 'mood-travel:favorites:v1';
 function readRoute(): Route {
@@ -25,12 +26,21 @@ function readInsets() {
   catch { return { top: 0, bottom: 0, left: 0, right: 0 }; }
 }
 
+function RecommendationLoading() {
+  const [isSlow, setIsSlow] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsSlow(true), 10_000);
+    return () => clearTimeout(timer);
+  }, []);
+  return <div role="status" className="empty-state">{isSlow ? '호스팅이 느리니 잠시 기다려 주세요' : '여행지를 살펴보고 있어요.'}</div>;
+}
 function App() {
   const [route, setRoute] = useState<Route>(readRoute);
   const [mood, setMood] = useState<Mood>('rest');
   const [region, setRegion] = useState<Region>('전체');
   const [favorites, setFavorites] = useState(readFavorites);
   const [storageNotice, setStorageNotice] = useState('');
+  const [failedImage, setFailedImage] = useState<{ id: string; url: string } | null>(null);
 
   const [catalog, setCatalog] = useState<{ key: string; items: Destination[]; status: 'ready' | 'error' } | null>(null);
   const [pageNo, setPageNo] = useState(1);
@@ -147,6 +157,7 @@ function App() {
         <select id="region" value={region} onChange={(event) => { setRegion(event.target.value as Region); setPageNo(1); }}>{regions.map((item) => <option key={item} value={item}>{item === '전체' ? '지역 상관없이 추천받기' : item}</option>)}</select>
       </section>
       <button className="secondary-button" type="button" onClick={() => navigate('/saved')}>찜한 여행지 {favorites.length}곳 보기</button>
+      <button className="secondary-button" type="button" onClick={() => navigate('/ads')}>광고 테스트</button>
       <p className="sample-note">{isSample ? '샘플 여행지로 추천 흐름을 체험할 수 있어요.' : '한국관광공사 관광정보를 바탕으로 추천해요.'}</p>
       <div className="bottom-action"><button className="primary-button" type="button" onClick={() => navigate('/results')}>내 기분에 맞는 여행지 찾기</button></div>
     </>}
@@ -155,7 +166,7 @@ function App() {
       <p className="eyebrow brand-label">{region === '전체' ? '전국' : region} · {currentMood.title}</p>
       <h1 ref={headingRef} tabIndex={-1}>이런 여행은 어때요?</h1>
       <p className="lead">{moodThemes[mood].label} · {moodThemes[mood].description}</p>
-      {status === 'loading' && <div role="status" className="empty-state">여행지를 살펴보고 있어요.</div>}
+      {status === 'loading' && <RecommendationLoading key={queryKey} />}
       {status === 'error' && <div role="alert" className="empty-state"><h2>여행지를 불러오지 못했어요</h2><p>잠시 후 다시 시도해 주세요.</p><button className="secondary-button" type="button" onClick={() => setRetry((value) => value + 1)}>다시 불러오기</button></div>}
       {status === 'ready' && (results.length ? <><p className="result-count">추천 여행지 {results.length}곳</p><div className="destination-list">{results.map(card)}</div><p className="result-count">{pageNo}페이지 · 전체 후보 {recommendation?.totalCount ?? 0}곳</p></> : <div className="empty-state"><h2>조건에 맞는 여행지가 없어요</h2><p>다른 지역이나 기분을 선택해 보세요.</p></div>)}
       <p className="sample-note">{isSample ? '예시 데이터 · 그림은 실제 여행지 사진이 아니에요.' : '관광정보·사진 출처: 한국관광공사. 사진이 없는 경우 예시 그림을 표시해요.'}</p>
@@ -173,12 +184,14 @@ function App() {
     </>}
 
     {route.page === 'detail' && (catalogStatus === 'loading' ? <div role="status" className="empty-state">여행지를 불러오고 있어요.</div> : catalogStatus === 'error' ? <div role="alert" className="empty-state"><p>여행지를 불러오지 못했어요.</p><button type="button" className="secondary-button" onClick={() => setRetry((value) => value + 1)}>다시 불러오기</button></div> : place ? <>
-      <DestinationImage destination={place} />
+      <DestinationImage destination={place} onImageError={() => setFailedImage({ id: place.id, url: place.imageUrl! })} />
       <p className="eyebrow">{place.location} · {place.category}</p>
       <h1 ref={headingRef} tabIndex={-1}>{place.name}</h1>
       <div className="tags">{place.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
       <section className="reason-box"><h2>이 여행지를 고른 이유</h2><p>{place.reason[mood] ?? '직접 찜한 여행지예요.'}</p></section>
-      <section className="selection-section"><h2>어떤 곳인가요?</h2><p>{place.description}</p></section>
+      <section className="selection-section"><h2>어떤 곳인가요?</h2><p>{place.description}</p>
+        {!isSample && (!place.imageUrl || (failedImage?.id === place.id && failedImage.url === place.imageUrl)) && <p className="sample-note" role="status">{!place.imageUrl ? '한국관광공사에서 제공한 여행지 이미지가 없어 예시 그림을 표시해요.' : '한국관광공사 여행지 이미지를 불러오지 못해 예시 그림을 표시해요.'} 예시 그림은 실제 여행지 사진이 아니에요.</p>}
+      </section>
       <section className="info-box"><h2>방문 정보</h2><p>{place.visitInfo ? <><span>주소: {place.location}</span><br /><span>이용시간: {place.visitInfo.hours || '미제공'}</span><br /><span>요금: {place.visitInfo.fee || '미제공'}</span><br /><span>쉬는 날: {place.visitInfo.closedDays || '미제공'}</span><br /><span>문의: {place.visitInfo.phone || '미제공'}</span></> : '샘플 데이터에는 운영 정보가 없어요.'}</p></section>
       <button className="secondary-button" type="button" onClick={() => navigate('/results')}>추천 목록 보기</button>
       <p className="sample-note">{isSample ? '예시 데이터 · 그림은 실제 여행지 사진이 아니에요.' : '관광정보·사진 출처: 한국관광공사. 사진이 없는 경우 예시 그림을 표시해요.'}</p>
@@ -186,6 +199,7 @@ function App() {
     </> : <>
       <h1 ref={headingRef} tabIndex={-1}>여행지를 찾을 수 없어요</h1><p>추천 목록에서 다른 여행지를 골라보세요.</p><button className="primary-button" type="button" onClick={() => navigate('/')}>처음으로 돌아가기</button>
     </>)}
+    {route.page === 'ads' && <InAppAdsPage onBack={() => navigate('/')} />}
     {storageNotice && <p role="status" className="storage-notice">{storageNotice}</p>}
   </main>;
 }

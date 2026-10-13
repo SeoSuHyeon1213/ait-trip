@@ -2,6 +2,7 @@
 export function readAppRoute({ pathname = '/', hash = '' }) {
   const path = (hash.startsWith('#/') ? hash.slice(1) : pathname).replace(/\/+$/, '') || '/';
   if (path === '/results') return { page: 'results' };
+  if (path === '/ads') return { page: 'ads' };
   if (path === '/saved') return { page: 'saved' };
   if (path.startsWith('/place/') && path.slice(7)) return { page: 'detail', id: path.slice(7) };
   return { page: 'home' };
