@@ -5,5 +5,5 @@ export function DestinationImage({ destination, onImageError }: { destination: D
   const [failedUrl, setFailedUrl] = useState<string>();
   return destination.imageUrl && failedUrl !== destination.imageUrl
     ? <img className="scenery destination-photo" src={destination.imageUrl} alt={destination.name} onError={() => { setFailedUrl(destination.imageUrl); onImageError?.(); }} />
-    : <Scenery scene={destination.scene} />;
+    : <Scenery scene={destination.scene} theme={[destination.name, ...destination.tags].join(' ')} />;
 }
