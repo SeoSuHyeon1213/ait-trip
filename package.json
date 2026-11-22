@@ -11,14 +11,19 @@
     "deploy": "ait deploy",
     "start": "node --env-file=.env server/index.mjs",
     "test": "node --test tests/*.test.mjs",
-    "start:server": "node server/index.mjs"
+    "start:server": "node server/index.mjs",
+    "build:web": "tsc -b && vite build --mode web --outDir dist-web",
+    "dev:cloudflare": "npm run build:web && wrangler dev",
+    "deploy:cloudflare": "npm run build:web && wrangler deploy",
+    "check:cloudflare": "npm run build:web && wrangler deploy --dry-run --outdir work/worker-dry-run"
   },
   "dependencies": {
+    "@apps-in-toss/web-framework": "3.2.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "@apps-in-toss/web-framework": "3.2.0"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@apps-in-toss/devtools": "^3.2.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
@@ -26,6 +31,6 @@
     "oxlint": "^1.79.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.2",
-    "@apps-in-toss/devtools": "^3.2.0"
+    "wrangler": "^4.161.0"
   }
 }

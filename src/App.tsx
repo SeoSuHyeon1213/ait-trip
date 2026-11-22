@@ -1,3 +1,4 @@
+import { isBrowserBuild } from './config/runtime';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { graniteEvent, SafeAreaInsets } from '@apps-in-toss/web-framework';
@@ -7,6 +8,8 @@ import type { Destination, Mood, Region } from './domain/models/Destination';
 import { destinationRepository } from './composition/destinationRepository';
 import { DestinationImage } from './components/DestinationImage';
 import { DestinationCard } from './components/DestinationCard';
+import { DestinationMap } from './components/DestinationMap';
+import { VisitInformation } from './components/VisitInformation';
 import { BookmarkIcon, CheckIcon, MoodIcon, TravelerIcon } from './components/TravelIcons';
 import { ChevronDown, ChevronRight } from './components/icons';
 import { getDestinationTheme, getThemeOptions, moodPageTitles, shortMoodLabels, sortSavedPlaces, summarizeSavedPlaces } from './domain/travelPresentation';
@@ -28,6 +31,7 @@ function readFavorites(): string[] {
   } catch { return []; }
 }
 function readInsets() {
+  if (isBrowserBuild) return { top: 0, bottom: 0, left: 0, right: 0 };
   try { return SafeAreaInsets.get(); }
   catch { return { top: 0, bottom: 0, left: 0, right: 0 }; }
 }
@@ -84,13 +88,14 @@ function App() {
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, [route]);
 
   useEffect(() => {
+    if (isBrowserBuild) return;
     try {
       return SafeAreaInsets.subscribe({ onEvent: setInsets });
     } catch { /* 일반 브라우저에서는 CSS env() safe-area를 사용합니다. */ }
   }, []);
 
   useEffect(() => {
-    if (route.page === 'home') return;
+    if (isBrowserBuild || route.page === 'home') return;
     try {
       return graniteEvent.addEventListener('backEvent', {
         onEvent: () => {
@@ -151,14 +156,14 @@ function App() {
         <section className="passport-card home-passport" aria-label="나의 여행 기록">
           <div className="passport-topline">
             <p className="passport-label">MY TRAVEL PASSPORT</p>
-            <button type="button" className="passport-link" aria-describedby="saved-ad-notice" onClick={() => navigate('/saved')}>찜 목록 보기 <ChevronRight size={16} /></button>
+            <button type="button" className="passport-link" aria-describedby={isBrowserBuild ? undefined : "saved-ad-notice"} onClick={() => navigate('/saved')}>찜 목록 보기 <ChevronRight size={16} /></button>
           </div>
           <dl className="passport-stats">
             <div><dt>찜한 곳</dt><dd>{favorites.length}</dd></div>
             <div><dt>둘러본 지역</dt><dd>{passport.viewedRegions.length}</dd></div>
             <div><dt>받은 추천</dt><dd>{passport.recommendationIds.length}</dd></div>
           </dl>
-          <p id="saved-ad-notice" className="passport-ad-note">찜 목록을 열 때 전면 광고가 표시돼요.</p>
+          {!isBrowserBuild && <p id="saved-ad-notice" className="passport-ad-note">찜 목록을 열 때 전면 광고가 표시돼요.</p>}
         </section>
       </header>
       <div className="content-panel home-panel">
@@ -196,7 +201,7 @@ function App() {
         <p className="sample-note">{isSample ? '예시 데이터 · 그림은 실제 여행지 사진이 아니에요.' : '관광정보·사진 출처: 한국관광공사. 사진이 없는 경우 예시 그림을 표시해요.'}</p>
       </div>
       <div className="bottom-action with-bookmark">
-        <button type="button" className="saved-shortcut" aria-label={`찜한 여행지 ${favorites.length}곳 보기 · 전면 광고 후 열림`} onClick={() => navigate('/saved')}><BookmarkIcon filled /></button>
+        <button type="button" className="saved-shortcut" aria-label={`찜한 여행지 ${favorites.length}곳 보기${isBrowserBuild ? '' : ' · 전면 광고 후 열림'}`} onClick={() => navigate('/saved')}><BookmarkIcon filled /></button>
         <button className="primary-button" type="button" onClick={() => navigate('/')}>기분과 지역 다시 선택하기</button>
       </div>
     </>}
@@ -225,10 +230,11 @@ function App() {
       <h1 ref={headingRef} tabIndex={-1}>{place.name}</h1>
       <div className="tags">{place.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
       <section className="reason-box"><h2>이 여행지를 고른 이유</h2><p>{place.reason[mood] ?? '직접 찜한 여행지예요.'}</p></section>
-      <section className="selection-section"><h2>어떤 곳인가요?</h2><p>{place.description}</p>
+      <section className="selection-section"><h2>어떤 곳인가요?</h2><p className="tour-text">{place.description}</p>
         {!isSample && (!place.imageUrl || (failedImage?.id === place.id && failedImage.url === place.imageUrl)) && <p className="sample-note" role="status">{!place.imageUrl ? '한국관광공사에서 제공한 여행지 이미지가 없어 예시 그림을 표시해요.' : '한국관광공사 여행지 이미지를 불러오지 못해 예시 그림을 표시해요.'} 예시 그림은 실제 여행지 사진이 아니에요.</p>}
       </section>
-      <section className="info-box"><h2>방문 정보</h2><p>{place.visitInfo ? <><span>주소: {place.location}</span><br /><span>이용시간: {place.visitInfo.hours || '미제공'}</span><br /><span>요금: {place.visitInfo.fee || '미제공'}</span><br /><span>쉬는 날: {place.visitInfo.closedDays || '미제공'}</span><br /><span>문의: {place.visitInfo.phone || '미제공'}</span></> : '샘플 데이터에는 운영 정보가 없어요.'}</p></section>
+      <DestinationMap key={`map-${place.id}`} place={place} />
+      <VisitInformation key={place.id} place={place} isSample={isSample} />
       <button className="secondary-button" type="button" onClick={() => navigate('/results')}>추천 목록 보기</button>
       <p className="sample-note">{isSample ? '예시 데이터 · 그림은 실제 여행지 사진이 아니에요.' : '관광정보·사진 출처: 한국관광공사. 사진이 없는 경우 예시 그림을 표시해요.'}</p>
       <div className="bottom-action"><button className="primary-button" type="button" aria-pressed={favorites.includes(place.id)} onClick={() => toggleFavorite(place.id)}>{favorites.includes(place.id) ? '찜한 여행지에서 삭제하기' : '이 여행지 찜하기'}</button></div>

@@ -6,7 +6,7 @@ import { createApiHandler } from './server/tour-api.mjs';
 
 export default defineConfig(({ mode, command }) => {
   const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env };
-  if (command === 'build') getApiUrl(env.VITE_API_BASE_URL, '/api/status', true);
+  if (command === 'build' && mode !== 'web') getApiUrl(env.VITE_API_BASE_URL, '/api/status', true);
   const handler = createApiHandler(env);
   return { plugins: [aitDevtools.vite(), react(), {
     name: 'tour-api-server',

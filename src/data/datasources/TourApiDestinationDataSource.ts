@@ -1,10 +1,11 @@
+import { isBrowserBuild } from '../../config/runtime';
 import { getApiUrl } from '../../config/apiBase.mjs';
 import type { DestinationDataSource, DtoPage } from './DestinationDataSource';
 import type { RecommendationQuery } from '../../domain/models/Destination';
 import type { DestinationDto } from '../dto/DestinationDto';
 import type { TourPageDto, TourDetailDto } from '../dto/TourApiDto';
 import { mapTourDestination } from '../mappers/TourDestinationMapper';
-export function apiUrl(path: string) { return getApiUrl(import.meta.env.VITE_API_BASE_URL, path, import.meta.env.PROD); }
+export function apiUrl(path: string) { return getApiUrl(isBrowserBuild ? '' : import.meta.env.VITE_API_BASE_URL, path, import.meta.env.PROD && !isBrowserBuild); }
 export async function requestJson<T>(path: string): Promise<T> {
   const response = await fetch(apiUrl(path), { signal: AbortSignal.timeout(path === '/api/status' ? 90000 : 30000) });
   const value = await response.json();

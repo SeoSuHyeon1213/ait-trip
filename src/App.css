@@ -137,3 +137,23 @@ select { width: 100%; padding: var(--space-3) var(--space-4); border: 1px solid 
 
 /* 이모지용 컬러 숫자 대신 일반 숫자 글꼴로 여권 번호를 표시합니다. */
 .destination-number, .passport-stats dd, .hero-description strong { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+
+/* Preserve TourAPI paragraphs and let long URLs wrap on small screens. */
+.tour-text { white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.8; font-size: var(--font-size-body); }
+.visit-information { margin: var(--space-4) 0 0; }
+.visit-information > div + div { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+.visit-information dt { color: var(--color-text-subtle); font-size: var(--font-size-body-small); margin-bottom: var(--space-1); }
+.visit-information dd { margin: 0; font-size: var(--font-size-body); }
+.place-address { user-select: text; -webkit-user-select: text; overflow-wrap: anywhere; line-height: 1.7; }
+.copy-address { width: auto; min-height: 44px; margin-top: var(--space-2); }
+.copy-address:disabled { opacity: .6; cursor: wait; }
+.copy-notice { font-size: var(--font-size-body-small); color: var(--color-text-subtle); line-height: 1.6; }
+.copy-notice:not(:empty) { margin-top: var(--space-3); }
+.tour-text, .visit-information dd { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Tossface", sans-serif; }
+
+.destination-map-section { margin-top: var(--space-5); }
+.destination-map-section h2 { font-size: var(--font-size-subtitle); margin-bottom: var(--space-3); }
+.destination-map-frame { position: relative; border: 1px solid var(--line); border-radius: var(--radius-small); overflow: hidden; }
+.destination-map { width: 100%; height: 300px; background: var(--color-bg-canvas); }
+.map-message { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); padding: var(--space-5); background: var(--color-bg-canvas); color: var(--color-text-subtle); font-size: var(--font-size-body); text-align: center; }
+.map-message .secondary-button { width: auto; min-height: 44px; }

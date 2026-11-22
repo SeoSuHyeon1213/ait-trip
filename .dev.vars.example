@@ -1,0 +1,7 @@
+# Local Wrangler only. Copy to .dev.vars and fill values privately.
+# Never use VITE_ for these settings. Never commit .dev.vars.
+TOUR_API_ENDPOINT=
+TOUR_API_SERVICE_KEY=
+
+# Public browser identifier for Naver Web Dynamic Map (not Client Secret).
+NAVER_MAP_CLIENT_ID=

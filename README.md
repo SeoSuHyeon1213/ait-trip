@@ -56,7 +56,9 @@ apps-in-toss.config.ts          앱인토스 설정
 
 기분별 추천 테마: 휴식(자연공원·휴양림·정원), 기분 전환(바다·강·호수), 새로운 경험(박물관·미술관·과학관), 함께(테마파크·동물원·수족관). 테마 규칙은 `src/config/moodThemes.mjs`에서 관리합니다.
 
-토스 앱용 서버 배포와 번들 주소 설정은 [Render 배포 안내](docs/render-deployment.md)를 참고하세요. 외부 API 기본 주소는 VITE_API_BASE_URL로 지정하며 설정 없이 출시용 번들을 만들 수 없습니다.
+공개 웹 및 API의 Cloudflare 이전은 [Cloudflare 배포 안내](docs/cloudflare-deployment.md)를 참고하세요. 공개 웹은 `npm run build:web`로 별도 빌드하며 관광공사 키는 Worker Secret에만 저장합니다.
+
+기존 토스 앱용 서버 배포와 번들 주소 설정은 [Render 배포 안내](docs/render-deployment.md)를 참고하세요. 외부 API 기본 주소는 VITE_API_BASE_URL로 지정하며 설정 없이 출시용 번들을 만들 수 없습니다.
 
 ## 찜 목록 진입 광고
 

@@ -31,3 +31,11 @@ dist-ssr
 !.env.example
 *.tsbuildinfo
 
+# Cloudflare secrets and generated output
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+dist-web/
+work/
+

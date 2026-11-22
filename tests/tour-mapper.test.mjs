@@ -51,3 +51,21 @@ test('theme codes determine mood and concrete recommendation reasons', () => {
   }
   assert.equal(mapTourDestination(item, regions, []).mood_codes.length, 0);
 });
+
+test('tour text keeps paragraphs, list items and line breaks without rendering HTML', () => {
+  const { plainText } = moduleExports;
+  assert.equal(plainText('<p>첫 문단 &amp; 소개</p><p>다음 문단<br />운영 안내</p>'), '첫 문단 & 소개\n\n다음 문단\n운영 안내');
+  assert.equal(plainText('<ul><li>성인 &#49;,000원</li><li>어린이 &#x35;00원</li></ul>'), '• 성인 1,000원\n• 어린이 500원');
+  assert.equal(plainText('  안내\r\n  시간  <br><br><br>문의 &nbsp; 전화  '), '안내\n시간\n\n문의 전화');
+  assert.equal(plainText('<script>alert(1)</script><style>p {}</style><a href="x">안내</a>'), '안내');
+  assert.equal(plainText('&#99999999;'), '&#99999999;');
+});
+
+test('copyable address includes both address fields and never falls back to region', () => {
+  const dto = mapTourDestination({ ...item, addr1: '서울특별시 용산구', addr2: '서빙고로 137' }, regions, []);
+  assert.equal(dto.address, '서울특별시 용산구 서빙고로 137');
+  assert.equal(destinationExports.mapDestination(dto).address, dto.address);
+  const missing = mapTourDestination({ ...item, addr1: '', addr2: '' }, regions, []);
+  assert.equal(missing.address, undefined);
+  assert.equal(missing.location_label, '서울특별시');
+});

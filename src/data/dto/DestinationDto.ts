@@ -5,6 +5,7 @@ export interface DestinationDto {
   title: string;
   region_name: string;
   location_label: string;
+  address?: string;
   category_name: string;
   tag_names: string[];
   mood_codes: string[];

@@ -6,6 +6,7 @@ export interface Destination {
   name: string;
   region: string;
   location: string;
+  address?: string;
   category: string;
   tags: string[];
   moods: Mood[];

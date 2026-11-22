@@ -90,3 +90,49 @@ test('empty theme results do not fall back to unfiltered places', async () => {
   assert.equal(result.status,200); assert.deepEqual(result.value.items,[]);
   assert.equal(result.value.hasMore,false); assert.equal(areaCalls,1);
 });
+
+test('unfiltered recommendations start all three upstream calls before any completes', { timeout: 1000 }, async () => {
+  const calls = [];
+  const releases = [];
+  let notifyStarted;
+  const allStarted = new Promise(resolve => { notifyStarted = resolve; });
+  const handler = createApiHandler(config, url => {
+    calls.push(url.pathname.split('/').at(-1));
+    const response = new Promise(resolve => releases.push(resolve));
+    if (calls.length === 3) notifyStarted();
+    return response;
+  });
+
+  const response = invoke(handler, '/api/destinations');
+  await allStarted;
+  assert.deepEqual(new Set(calls), new Set(['areaBasedList2', 'ldongCode2', 'lclsSystmCode2']));
+  for (const release of releases) release(Response.json(envelope([])));
+  assert.equal((await response).status, 200);
+});
+
+test('expired reference codes survive a temporary refresh failure', async t => {
+  let now = 1000;
+  t.mock.method(Date, 'now', () => now);
+  let calls = 0;
+  const handler = createApiHandler(config, async url => {
+    const operation = url.pathname.split('/').at(-1);
+    if (operation === 'ldongCode2') {
+      calls++;
+      if (calls > 1) return Response.json({ response: { header: { resultCode: '05' } } });
+      return Response.json(envelope([{ code: '11', name: '서울특별시' }]));
+    }
+    if (operation === 'areaBasedList2') assert.equal(url.searchParams.get('lDongRegnCd'), '11');
+    return Response.json(envelope([]));
+  });
+
+  const request = '/api/destinations?region=' + encodeURIComponent('서울');
+  assert.equal((await invoke(handler, request)).status, 200);
+  now += 23 * 60 * 60 * 1000;
+  assert.equal((await invoke(handler, request)).status, 200);
+  assert.equal(calls, 1);
+  now += 2 * 60 * 60 * 1000;
+  assert.equal((await invoke(handler, request)).status, 200);
+  assert.equal(calls, 2);
+  now += 7 * 24 * 60 * 60 * 1000;
+  assert.equal((await invoke(handler, request)).status, 502);
+});

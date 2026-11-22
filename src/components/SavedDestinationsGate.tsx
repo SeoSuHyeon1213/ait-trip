@@ -1,3 +1,4 @@
+import { isBrowserBuild } from '../config/runtime';
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { openSavedDestinations } from '../ads/openSavedDestinations';
@@ -30,7 +31,7 @@ function SavedDestinationsAd({ onComplete, onBack }: { onComplete: () => void; o
 }
 
 export function SavedDestinationsGate({ children, onBack }: { children: ReactNode; onBack: () => void }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isBrowserBuild);
   const complete = useCallback(() => setIsOpen(true), []);
 
   return isOpen ? children : <SavedDestinationsAd onComplete={complete} onBack={onBack} />;

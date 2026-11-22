@@ -17,6 +17,7 @@ export function mapDestination(dto: DestinationDto): Destination {
     name: dto.title,
     region: dto.region_name as Destination['region'],
     location: dto.location_label,
+    address: dto.address,
     category: dto.category_name,
     tags: [...dto.tag_names],
     moods: [...dto.mood_codes] as Mood[],
