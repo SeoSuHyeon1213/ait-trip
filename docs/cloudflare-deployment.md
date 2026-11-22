@@ -23,7 +23,7 @@ npx wrangler secret put TOUR_API_SERVICE_KEY
 - 관광공사 인증키는 Vercel 환경변수 `TOUR_API_SERVICE_KEY`에만 있습니다.
 - Worker와 중계는 같은 무작위 토큰을 씁니다(Vercel `RELAY_TOKEN`, Worker Secret `TOUR_API_RELAY_TOKEN`). 토큰이 없으면 중계는 401을 반환합니다.
 - 중계 주소는 `wrangler.jsonc`의 `TOUR_API_RELAY_URL`입니다. 이 값을 지우면 Worker는 다시 직접 호출합니다.
-- 중계 배포: `relay` 폴더에서 `npx vercel deploy --prod`.
+- 중계 배포: GitHub `main`에 푸시하면 Vercel이 자동 배포합니다(프로젝트 Root Directory = `relay`). Root Directory가 설정되어 있으므로 `relay` 폴더 안에서 `vercel deploy`를 직접 실행하지 않습니다.
 - 토큰을 바꿀 때는 두 곳을 함께 바꿉니다.
 
 ## 웹 배포
