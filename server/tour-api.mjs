@@ -36,9 +36,14 @@ export function parseEnvelope(value) {
   return { items, totalCount, pageNo: Number(body.pageNo ?? 1), numOfRows: Number(body.numOfRows ?? items.length) };
 }
 export function createTourClient(config, fetcher = fetch) {
-  const endpoint = config.TOUR_API_ENDPOINT?.trim() ?? '';
-  const key = config.TOUR_API_SERVICE_KEY?.trim() ?? '';
-  const configured = Boolean(endpoint && key);
+  // 중계 주소와 토큰이 있으면 한국 중계(relay/)를 거칩니다. 인증키는 중계 서버에만 둡니다.
+  const relayUrl = config.TOUR_API_RELAY_URL?.trim() ?? '';
+  const relayToken = config.TOUR_API_RELAY_TOKEN?.trim() ?? '';
+  const viaRelay = Boolean(relayUrl && relayToken);
+  const endpoint = viaRelay ? relayUrl : config.TOUR_API_ENDPOINT?.trim() ?? '';
+  const key = viaRelay ? '' : config.TOUR_API_SERVICE_KEY?.trim() ?? '';
+  const configured = viaRelay || Boolean(endpoint && key);
+  const requestInit = viaRelay ? { headers: { 'X-Relay-Token': relayToken } } : {};
   const cache = new Map();
   return {
     configured,
@@ -49,7 +54,7 @@ export function createTourClient(config, fetcher = fetch) {
       try { base = new URL(endpoint.endsWith('/') ? endpoint : endpoint + '/'); } catch { throw new ApiError('서버 엔드포인트 설정을 확인해 주세요.', 503); }
       if (base.protocol !== 'https:') throw new ApiError('HTTPS 엔드포인트를 입력해 주세요.', 503);
       const url = new URL(operation, base);
-      url.search = new URLSearchParams({ serviceKey: key, MobileOS: 'WEB', MobileApp: config.TOUR_API_MOBILE_APP || 'ait-trip', _type: 'json', numOfRows: '20', pageNo: '1', ...params }).toString();
+      url.search = new URLSearchParams({ ...(viaRelay ? {} : { serviceKey: key }), MobileOS: 'WEB', MobileApp: config.TOUR_API_MOBILE_APP || 'ait-trip', _type: 'json', numOfRows: '20', pageNo: '1', ...params }).toString();
       // 일반(Decoding) 인증키를 URLSearchParams에서 한 번만 인코딩합니다.
       const cacheKey = operation + JSON.stringify(params);
       const stored = cacheResult ? cache.get(cacheKey) : undefined;
@@ -65,7 +70,7 @@ export function createTourClient(config, fetcher = fetch) {
         let response;
         let text;
         try {
-          response = await fetcher(url, { signal });
+          response = await fetcher(url, { ...requestInit, signal });
           log.httpStatus = response.status;
           text = await response.text();
         } catch {

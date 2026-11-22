@@ -39,3 +39,6 @@ dist-ssr
 dist-web/
 work/
 
+
+# Vercel relay link state
+relay/.vercel/

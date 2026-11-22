@@ -16,6 +16,9 @@
   },
   "vars": {
     "TOUR_API_MOBILE_APP": "aitmidtotrip",
+    // 공공데이터 게이트웨이가 Cloudflare 출구 IP를 막아서 한국 중계(relay/, Vercel icn1)를 거칩니다.
+    // 토큰은 Secret TOUR_API_RELAY_TOKEN에 있습니다.
+    "TOUR_API_RELAY_URL": "https://aitmidtotrip-tour-relay.vercel.app/api/tour",
     "CORS_ALLOWED_ORIGINS": "https://aitmidtotrip.apps.tossmini.com,https://aitmidtotrip.private-apps.tossmini.com"
   },
   "keep_vars": true

@@ -136,3 +136,17 @@ test('expired reference codes survive a temporary refresh failure', async t => {
   now += 7 * 24 * 60 * 60 * 1000;
   assert.equal((await invoke(handler, request)).status, 502);
 });
+test('relay mode sends the shared token header and never the TourAPI key', async () => {
+  let seen;
+  const client = createTourClient({ TOUR_API_RELAY_URL: 'https://relay.example/api/tour', TOUR_API_RELAY_TOKEN: 'relay-token', TOUR_API_SERVICE_KEY: 'must-not-leak', TOUR_API_ENDPOINT: 'https://example.test/KorService2' }, async (url, init) => {
+    seen = { url, init };
+    return Response.json(envelope([{ contentid: '1' }]));
+  });
+  assert.equal(client.configured, true);
+  const page = await client.call('areaBasedList2', { pageNo: '2' }, { cacheResult: false });
+  assert.equal(page.items[0].contentid, '1');
+  assert.equal(seen.url.origin + seen.url.pathname, 'https://relay.example/api/tour/areaBasedList2');
+  assert.equal(seen.url.searchParams.has('serviceKey'), false);
+  assert.equal(seen.url.href.includes('must-not-leak'), false);
+  assert.equal(seen.init.headers['X-Relay-Token'], 'relay-token');
+});

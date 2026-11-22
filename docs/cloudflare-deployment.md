@@ -16,6 +16,16 @@ npx wrangler secret put TOUR_API_SERVICE_KEY
 
 대시보드에서도 Workers & Pages → 해당 Worker → Settings → Variables and Secrets → Add에서 Type을 **Secret**으로 선택하고 위 이름과 값을 입력할 수 있습니다. 키는 빌드용 환경변수에 넣지 않고 Worker 런타임 Secret에만 저장합니다. 설정을 적용하려면 Save/Deploy 안내를 따릅니다.
 
+## 한국 중계 (relay/)
+
+공공데이터 게이트웨이(apis.data.go.kr)는 Cloudflare 출구 IP에서 온 요청을 수시로 응답 없이 멈춥니다. 그래서 Worker는 관광공사 API를 직접 부르지 않고, Vercel 서울(icn1)에 배포한 `relay/` 함수를 거칩니다.
+
+- 관광공사 인증키는 Vercel 환경변수 `TOUR_API_SERVICE_KEY`에만 있습니다.
+- Worker와 중계는 같은 무작위 토큰을 씁니다(Vercel `RELAY_TOKEN`, Worker Secret `TOUR_API_RELAY_TOKEN`). 토큰이 없으면 중계는 401을 반환합니다.
+- 중계 주소는 `wrangler.jsonc`의 `TOUR_API_RELAY_URL`입니다. 이 값을 지우면 Worker는 다시 직접 호출합니다.
+- 중계 배포: `relay` 폴더에서 `npx vercel deploy --prod`.
+- 토큰을 바꿀 때는 두 곳을 함께 바꿉니다.
+
 ## 웹 배포
 
 ```powershell
